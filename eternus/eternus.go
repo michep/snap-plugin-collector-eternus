@@ -2,6 +2,7 @@ package eternus
 
 import (
 	"github.com/intelsdi-x/snap-plugin-lib-go/v1/plugin"
+	"strings"
 )
 
 const (
@@ -31,6 +32,7 @@ type Plugin struct {
 	cliprefix   string
 	waittime    int64
 	stats       []EternusCollector
+	system      string
 }
 
 func NewCollector(stats ...EternusCollector) *Plugin {
@@ -69,6 +71,7 @@ func (p *Plugin) CollectMetrics(metrics []plugin.Metric) ([]plugin.Metric, error
 		p.cipher, _ = config.GetString(paramCipher)
 		p.cliprefix, _ = config.GetString(paramCLIPrefix)
 		p.waittime, _ = config.GetInt(paramWaitTime)
+		p.system = strings.Split(p.host, ":")[0]
 		p.initialized = true
 	}
 
@@ -81,6 +84,7 @@ func (p *Plugin) CollectMetrics(metrics []plugin.Metric) ([]plugin.Metric, error
 	for _, stat := range p.stats {
 		stat.Reset()
 		for _, metric := range metrics {
+			metric.Tags = map[string]string{"system": p.system}
 			mt, err := stat.CollectMetrics(exec, p.cliprefix, metric)
 			if err != nil {
 				return nil, err
